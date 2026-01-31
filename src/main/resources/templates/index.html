@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>SSCHOI Local LLM Chat</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f8;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+
+    .chat-container {
+        width: 650px;
+        height: 600px;
+        background: #fff;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .chat-header {
+        padding: 12px;
+        background: #2f80ed;
+        color: white;
+        text-align: center;
+        font-weight: bold;
+        border-radius: 10px 10px 0 0;
+    }
+
+    .chat-body {
+        flex: 1;
+        padding: 12px;
+        overflow-y: auto;
+        background: #f9fafb;
+    }
+
+    .message {
+        margin-bottom: 10px;
+        max-width: 80%;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    .user {
+        background: #2f80ed;
+        color: white;
+        align-self: flex-end;
+        margin-left: auto;
+    }
+
+    .ai {
+        background: #e5e7eb;
+        color: #111;
+        align-self: flex-start;
+        margin-right: auto;
+    }
+
+    .chat-footer {
+        display: flex;
+        padding: 10px;
+        border-top: 1px solid #ddd;
+    }
+
+    .chat-footer input {
+        flex: 1;
+        padding: 8px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        outline: none;
+    }
+
+    .chat-footer button {
+        margin-left: 8px;
+        padding: 8px 14px;
+        background: #2f80ed;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .chat-footer button:hover {
+        background: #2563eb;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">SSCHOI Local LLM Chat</div>
+
+    <div class="chat-body" id="chatBody"></div>
+
+    <div class="chat-footer">
+        <input type="text" id="messageInput" placeholder="메시지를 입력하세요..." />
+        <button onclick="sendMessage()">전송</button>
+    </div>
+</div>
+
+<script>
+const chatBody = document.getElementById('chatBody');
+const input = document.getElementById('messageInput');
+
+input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendMessage();
+});
+
+function addMessage(text, type) {
+    const div = document.createElement('div');
+    div.className = 'message ' + type;
+    div.textContent = text;
+    chatBody.appendChild(div);
+    chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+async function sendMessage() {
+    const message = input.value.trim();
+    if (!message) return;
+
+    addMessage(message, 'user');
+    input.value = '';
+
+    addMessage('생각 중...', 'ai');
+
+    try {
+        const res = await fetch(`http://localhost:8080/ai/test?prompt=${encodeURIComponent(message)}`);
+        const text = await res.text();
+
+        // 마지막 "생각 중..." 제거
+        chatBody.removeChild(chatBody.lastChild);
+        addMessage(text, 'ai');
+    } catch (e) {
+        chatBody.removeChild(chatBody.lastChild);
+        addMessage('서버 오류 발생', 'ai');
+    }
+}
+</script>
+
+</body>
+</html>
