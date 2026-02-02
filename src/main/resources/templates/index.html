@@ -43,11 +43,12 @@
 
     .message {
         margin-bottom: 10px;
-        max-width: 80%;
+        max-width: 90%;
         padding: 8px 12px;
         border-radius: 8px;
         font-size: 14px;
-        line-height: 1.4;
+        line-height: 1.5;
+        white-space: pre-wrap;
     }
 
     .user {
@@ -62,6 +63,20 @@
         color: #111;
         align-self: flex-start;
         margin-right: auto;
+    }
+
+    pre {
+        background: #111827;
+        color: #e5e7eb;
+        padding: 10px;
+        border-radius: 6px;
+        overflow-x: auto;
+        font-size: 13px;
+        margin-top: 6px;
+    }
+
+    code {
+        font-family: Consolas, monospace;
     }
 
     .chat-footer {
@@ -116,7 +131,7 @@ input.addEventListener('keydown', e => {
     if (e.key === 'Enter') sendMessage();
 });
 
-function addMessage(text, type) {
+function addTextMessage(text, type) {
     const div = document.createElement('div');
     div.className = 'message ' + type;
     div.textContent = text;
@@ -124,25 +139,74 @@ function addMessage(text, type) {
     chatBody.scrollTop = chatBody.scrollHeight;
 }
 
+function addCodeMessage(code, language) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'message ai';
+
+    const pre = document.createElement('pre');
+    const codeEl = document.createElement('code');
+    codeEl.textContent = code;
+    if (language) {
+        codeEl.className = `language-${language}`;
+    }
+
+    pre.appendChild(codeEl);
+    wrapper.appendChild(pre);
+    chatBody.appendChild(wrapper);
+    chatBody.scrollTop = chatBody.scrollHeight;
+}
+
 async function sendMessage() {
     const message = input.value.trim();
     if (!message) return;
 
-    addMessage(message, 'user');
+    addTextMessage(message, 'user');
     input.value = '';
 
-    addMessage('생각 중...', 'ai');
+    const thinking = document.createElement('div');
+    thinking.className = 'message ai';
+    thinking.textContent = '생각 중...';
+    chatBody.appendChild(thinking);
+    chatBody.scrollTop = chatBody.scrollHeight;
 
     try {
-        const res = await fetch(`http://localhost:8080/ai/test?prompt=${encodeURIComponent(message)}`);
-        const text = await res.text();
+        const res = await fetch('http://localhost:8080/ai/ask', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                prompt: message,
+                options: {
+                    responseFormat: 'markdown'
+                },
+                structure: [
+                    { type: 'text', description: '설명' },
+                    { type: 'code', description: '예제 코드' }
+                ]
+            })
+        });
 
-        // 마지막 "생각 중..." 제거
-        chatBody.removeChild(chatBody.lastChild);
-        addMessage(text, 'ai');
+        const data = await res.json();
+
+        chatBody.removeChild(thinking);
+
+        if (!data.success) {
+            addTextMessage(data.error || 'AI 오류 발생', 'ai');
+            return;
+        }
+
+        data.parts.forEach(part => {
+            if (part.type === 'TEXT') {
+                addTextMessage(part.content, 'ai');
+            } else if (part.type === 'CODE') {
+                addCodeMessage(part.content, part.language);
+            }
+        });
+
     } catch (e) {
-        chatBody.removeChild(chatBody.lastChild);
-        addMessage('서버 오류 발생', 'ai');
+        chatBody.removeChild(thinking);
+        addTextMessage('서버 오류 발생', 'ai');
     }
 }
 </script>
