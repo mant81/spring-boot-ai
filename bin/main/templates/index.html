@@ -2,214 +2,351 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>SSCHOI Local LLM Chat</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spring AI Chat</title>
 
 <style>
+    :root {
+        --bg: #f3f5f7;
+        --panel: #ffffff;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --assistant-bg: #ffffff;
+        --user-bg: #2563eb;
+        --user-text: #ffffff;
+        --accent: #111827;
+    }
+
+    * { box-sizing: border-box; }
+
     body {
-        font-family: Arial, sans-serif;
-        background: #f4f6f8;
+        margin: 0;
+        font-family: "Segoe UI", "Noto Sans KR", sans-serif;
+        background:
+            radial-gradient(circle at 10% 10%, #dbeafe 0%, transparent 45%),
+            radial-gradient(circle at 90% 90%, #fef3c7 0%, transparent 45%),
+            var(--bg);
+        color: var(--text);
+        height: 100vh;
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 100vh;
-        margin: 0;
+        padding: 20px;
     }
 
-    .chat-container {
-        width: 650px;
-        height: 600px;
-        background: #fff;
-        border-radius: 10px;
+    .app {
+        width: min(920px, 100%);
+        height: min(92vh, 900px);
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(17, 24, 39, 0.12);
         display: flex;
         flex-direction: column;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        overflow: hidden;
     }
 
-    .chat-header {
-        padding: 12px;
-        background: #2f80ed;
-        color: white;
-        text-align: center;
-        font-weight: bold;
-        border-radius: 10px 10px 0 0;
+    .topbar {
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border);
+        background: #ffffffd9;
+        backdrop-filter: blur(8px);
+    }
+
+    .title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--accent);
+    }
+
+    .subtitle {
+        font-size: 12px;
+        color: var(--muted);
     }
 
     .chat-body {
         flex: 1;
-        padding: 12px;
         overflow-y: auto;
-        background: #f9fafb;
+        padding: 24px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
     }
+
+    .row {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .row.user { justify-content: flex-end; }
+
+    .avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+    }
+
+    .avatar.assistant {
+        background: #111827;
+        color: #fff;
+    }
+
+    .avatar.user {
+        background: #bfdbfe;
+        color: #1e3a8a;
+        order: 2;
+    }
+
+    .message-group {
+        max-width: min(780px, 82vw);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .row.user .message-group { align-items: flex-end; }
 
     .message {
-        margin-bottom: 10px;
-        max-width: 90%;
-        padding: 8px 12px;
-        border-radius: 8px;
+        width: fit-content;
+        max-width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 11px 14px;
+        line-height: 1.55;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 14px;
+        background: var(--assistant-bg);
+    }
+
+    .row.user .message {
+        background: var(--user-bg);
+        border-color: var(--user-bg);
+        color: var(--user-text);
+    }
+
+    .composer-wrap {
+        padding: 14px;
+        border-top: 1px solid var(--border);
+        background: #fff;
+    }
+
+    .composer {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 10px;
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+        box-shadow: 0 4px 20px rgba(17, 24, 39, 0.05);
+    }
+
+    textarea {
+        flex: 1;
+        border: none;
+        outline: none;
+        resize: none;
         font-size: 14px;
         line-height: 1.5;
-        white-space: pre-wrap;
+        min-height: 24px;
+        max-height: 170px;
+        font-family: inherit;
+        color: var(--text);
     }
 
-    .user {
-        background: #2f80ed;
-        color: white;
-        align-self: flex-end;
-        margin-left: auto;
-    }
-
-    .ai {
-        background: #e5e7eb;
-        color: #111;
-        align-self: flex-start;
-        margin-right: auto;
-    }
-
-    pre {
-        background: #111827;
-        color: #e5e7eb;
-        padding: 10px;
-        border-radius: 6px;
-        overflow-x: auto;
-        font-size: 13px;
-        margin-top: 6px;
-    }
-
-    code {
-        font-family: Consolas, monospace;
-    }
-
-    .chat-footer {
-        display: flex;
-        padding: 10px;
-        border-top: 1px solid #ddd;
-    }
-
-    .chat-footer input {
-        flex: 1;
-        padding: 8px;
-        font-size: 14px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        outline: none;
-    }
-
-    .chat-footer button {
-        margin-left: 8px;
-        padding: 8px 14px;
-        background: #2f80ed;
-        color: white;
+    .send-btn {
         border: none;
-        border-radius: 4px;
+        border-radius: 10px;
+        background: #111827;
+        color: #fff;
+        padding: 10px 14px;
         cursor: pointer;
+        font-weight: 700;
+        font-size: 13px;
+        transition: transform .12s ease, opacity .12s ease;
     }
 
-    .chat-footer button:hover {
-        background: #2563eb;
+    .send-btn:hover { transform: translateY(-1px); }
+
+    .send-btn:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .dots {
+        display: inline-flex;
+        gap: 4px;
+        align-items: center;
+    }
+
+    .dots span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #94a3b8;
+        animation: blink 1s infinite ease-in-out;
+    }
+
+    .dots span:nth-child(2) { animation-delay: .15s; }
+    .dots span:nth-child(3) { animation-delay: .3s; }
+
+    @keyframes blink {
+        0%, 80%, 100% { opacity: .25; transform: translateY(0); }
+        40% { opacity: 1; transform: translateY(-2px); }
+    }
+
+    @media (max-width: 700px) {
+        body { padding: 0; }
+        .app {
+            width: 100%;
+            height: 100vh;
+            border-radius: 0;
+            border: none;
+        }
+        .chat-body { padding: 16px 12px; }
+        .composer-wrap { padding: 10px; }
     }
 </style>
 </head>
-
 <body>
+<div class="app">
+    <header class="topbar">
+        <div class="title">Spring AI Chat</div>
+        <div class="subtitle">질문하면 자연스럽게 답변해드릴게요.</div>
+    </header>
 
-<div class="chat-container">
-    <div class="chat-header">SSCHOI Local LLM Chat</div>
+    <main id="chatBody" class="chat-body"></main>
 
-    <div class="chat-body" id="chatBody"></div>
-
-    <div class="chat-footer">
-        <input type="text" id="messageInput" placeholder="메시지를 입력하세요..." />
-        <button onclick="sendMessage()">전송</button>
-    </div>
+    <footer class="composer-wrap">
+        <div class="composer">
+            <textarea id="messageInput" placeholder="메시지를 입력하세요. (Shift+Enter 줄바꿈)" rows="1"></textarea>
+            <button id="sendBtn" class="send-btn" onclick="sendMessage()">전송</button>
+        </div>
+    </footer>
 </div>
 
 <script>
 const chatBody = document.getElementById('chatBody');
 const input = document.getElementById('messageInput');
+const sendBtn = document.getElementById('sendBtn');
+let isLoading = false;
 
-input.addEventListener('keydown', e => {
-    if (e.key === 'Enter') sendMessage();
+function autoResize() {
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 170) + 'px';
+}
+
+input.addEventListener('input', autoResize);
+input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
 });
 
-function addTextMessage(text, type) {
-    const div = document.createElement('div');
-    div.className = 'message ' + type;
-    div.textContent = text;
-    chatBody.appendChild(div);
+function scrollToBottom() {
     chatBody.scrollTop = chatBody.scrollHeight;
 }
 
-function addCodeMessage(code, language) {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'message ai';
+function createRow(role) {
+    const row = document.createElement('div');
+    row.className = `row ${role}`;
 
-    const pre = document.createElement('pre');
-    const codeEl = document.createElement('code');
-    codeEl.textContent = code;
-    if (language) {
-        codeEl.className = `language-${language}`;
+    const avatar = document.createElement('div');
+    avatar.className = `avatar ${role}`;
+    avatar.textContent = role === 'assistant' ? 'AI' : 'ME';
+
+    const group = document.createElement('div');
+    group.className = 'message-group';
+
+    if (role === 'user') {
+        row.appendChild(group);
+        row.appendChild(avatar);
+    } else {
+        row.appendChild(avatar);
+        row.appendChild(group);
     }
 
-    pre.appendChild(codeEl);
-    wrapper.appendChild(pre);
-    chatBody.appendChild(wrapper);
-    chatBody.scrollTop = chatBody.scrollHeight;
+    chatBody.appendChild(row);
+    return group;
+}
+
+function addTextMessage(text, role) {
+    const group = createRow(role);
+    const div = document.createElement('div');
+    div.className = 'message';
+    div.textContent = text;
+    group.appendChild(div);
+    scrollToBottom();
+}
+
+function addThinkingMessage() {
+    const group = createRow('assistant');
+    const div = document.createElement('div');
+    div.className = 'message';
+    div.innerHTML = '생각 중 <span class="dots"><span></span><span></span><span></span></span>';
+    group.appendChild(div);
+    scrollToBottom();
+    return group.parentElement;
+}
+
+function setLoading(loading) {
+    isLoading = loading;
+    sendBtn.disabled = loading;
+    input.disabled = loading;
 }
 
 async function sendMessage() {
     const message = input.value.trim();
-    if (!message) return;
+    if (!message || isLoading) return;
 
     addTextMessage(message, 'user');
     input.value = '';
+    autoResize();
+    setLoading(true);
 
-    const thinking = document.createElement('div');
-    thinking.className = 'message ai';
-    thinking.textContent = '생각 중...';
-    chatBody.appendChild(thinking);
-    chatBody.scrollTop = chatBody.scrollHeight;
+    const thinkingRow = addThinkingMessage();
 
     try {
-        const res = await fetch('http://localhost:8080/ai/ask', {
+        const res = await fetch('/ai/ask', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                prompt: message,
-                options: {
-                    responseFormat: 'markdown'
-                },
-                structure: [
-                    { type: 'text', description: '설명' },
-                    { type: 'code', description: '예제 코드' }
-                ]
-            })
+            body: JSON.stringify({ prompt: message })
         });
 
         const data = await res.json();
-
-        chatBody.removeChild(thinking);
+        thinkingRow.remove();
 
         if (!data.success) {
-            addTextMessage(data.error || 'AI 오류 발생', 'ai');
+            addTextMessage(data.error || 'AI 처리 중 오류가 발생했습니다.', 'assistant');
             return;
         }
 
-        data.parts.forEach(part => {
-            if (part.type === 'TEXT') {
-                addTextMessage(part.content, 'ai');
-            } else if (part.type === 'CODE') {
-                addCodeMessage(part.content, part.language);
-            }
-        });
-
+        const answer = data.answer || (Array.isArray(data.parts) && data.parts[0] && data.parts[0].content);
+        addTextMessage(answer || '응답을 받지 못했습니다.', 'assistant');
     } catch (e) {
-        chatBody.removeChild(thinking);
-        addTextMessage('서버 오류 발생', 'ai');
+        if (thinkingRow && thinkingRow.parentNode) {
+            thinkingRow.remove();
+        }
+        addTextMessage('서버 통신 중 오류가 발생했습니다.', 'assistant');
+    } finally {
+        setLoading(false);
+        input.focus();
     }
 }
-</script>
 
+addTextMessage('안녕하세요. 무엇을 도와드릴까요?', 'assistant');
+autoResize();
+</script>
 </body>
 </html>

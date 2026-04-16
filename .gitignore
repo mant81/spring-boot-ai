@@ -1,0 +1,27 @@
+# Gradle
+.gradle/
+build/
+out/
+
+# Spring Boot runtime/logs
+*.log
+logs/
+
+# IDE files
+.idea/
+.vscode/
+.settings/
+.classpath
+.project
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local history/temp
+.history/
+
+# Compiled outputs
+bin/
+target/

@@ -4,8 +4,10 @@ spring:
     suffix: .html
     cache: false   # 개발 시 필수
   ai:
-    ollama:
-      base-url: http://localhost:11434
+    openai:
+      api-key: 개인 API 키 입력
       chat:
         options:
-          model: qwen2.5:0.5b
+          model: gpt-4.1-mini
+          temperature: 0.7
+          max-tokens: 800
